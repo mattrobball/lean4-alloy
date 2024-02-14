@@ -12,17 +12,16 @@ open Lean Elab Command
 @[inline] def mkElabInfoTree (elaborator : Name) (stx : Syntax) (trees : PersistentArray InfoTree) : InfoTree :=
   .node (.ofCommandInfo { elaborator, stx }) trees
 
-/-- Create context info for the info tree from the current state of command elaboration.  -/
-def mkCommandElabContextInfo : CommandElabM ContextInfo := do
+def mkCommandElabCommandContextInfo : CommandElabM CommandContextInfo := do
   let ctx ← read; let s ← get; let scope := s.scopes.head!
-  return  {
+  return {
     env := s.env, fileMap := ctx.fileMap, mctx := {}, currNamespace := scope.currNamespace,
     openDecls := scope.openDecls, options := scope.opts, ngen := s.ngen
   }
 
 /-- Create an info tree for an elaborator with the current command elaboration context. -/
 @[inline] def mkCommandElabInfoTree (elaborator : Name) (stx : Syntax) (trees : PersistentArray InfoTree) : CommandElabM InfoTree := do
-  return .context (← mkCommandElabContextInfo) (mkElabInfoTree elaborator stx trees)
+  return .context (.commandCtx (← mkCommandElabCommandContextInfo)) (mkElabInfoTree elaborator stx trees)
 
 /-- Adapted from the private `elabCommandUsing` definition in `Lean.Elab.Command`. -/
 def elabCommandUsing (stx : Syntax) : List (KeyedDeclsAttribute.AttributeEntry CommandElab) → CommandElabM Bool
